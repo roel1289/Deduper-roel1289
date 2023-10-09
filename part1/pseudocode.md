@@ -1,5 +1,5 @@
 # Deduper Pseudocode:
-
+Ross Ellwood Oct. 10th, 2023
 
 ## Problem: 
 When running PCR during the library prep stage of sequencing, it sometimes happens  
@@ -48,12 +48,37 @@ NS500451:154:HWKTMBGXX:1:11101:20566:1080:TATAGNGC	0	2	119767599	36	71M	*	0	0	CC
 
 
 ## Pseudocode algorithm:
-import argparse
-import bioinfo (make sure this is on the folder of script)
+import argparse  
+import bioinfo (make sure this is on the folder of script)  
 
-import sorted SAM file
+import sorted SAM file  
 
-account for CIGAR strings
-strand
-single-end reads
-known UMIs
+
+
+read in bam file  
+
+Go through each line one at at time (while true) and break once reaches empty line  
+
+If line begins with "@" continue to next line (header)  
+
+* account for CIGAR strings  
+Look for if there is soft clipping  
+if there is soft clipping, convert alignment start position to 5' leftmost of read  
+if there is no soft clipping, use start position specified in SAM file (col 4)  
+
+create dictionary of start positions
+
+* strand  
+use bitwise flag to determine if read is on the + or - strand  
+```
+if ((flag & 16)==16):
+   rev_comp = True
+```
+
+* known UMIs  
+Look at col 1 (QNAME) to see if it is the same as the previous line
+
+* single-end reads  
+(may work on this later)
+
+
