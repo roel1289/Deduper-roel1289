@@ -47,11 +47,13 @@ NS500451:154:HWKTMBGXX:1:11101:20566:1080:TATAGNGC	0	2	119767599	36	71M	*	0	0	CC
 
 
 
-
-
-
-
-
-
-
 ## Pseudocode algorithm:
+import argparse
+import bioinfo (make sure this is on the folder of script)
+
+import sorted SAM file
+
+account for CIGAR strings
+strand
+single-end reads
+known UMIs
