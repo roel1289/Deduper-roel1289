@@ -54,6 +54,8 @@ import bioinfo (make sure this is on the folder of script)
 import sorted SAM file  
 
 
+create banned dictionary: key = UMI, value = rest of record.
+   If there is ever a duplicate found, send to this dictionary. 
 
 read in bam file  
 
@@ -68,6 +70,8 @@ if there is no soft clipping, use start position specified in SAM file (col 4)
 
 create dictionary of start positions
 
+Add each unique start position to a dictionary
+
 * strand  
 use bitwise flag to determine if read is on the + or - strand  
 ```
@@ -75,10 +79,16 @@ if ((flag & 16)==16):
    rev_comp = True
 ```
 
+Add each record that is on the proper strand to a dictionary
+
 * known UMIs  
-Look at col 1 (QNAME) to see if it is the same as the previous line
+Look at col 1 (QNAME) to see if it is the same as the previous line. The UMI  
+is located in the last part of QNAME. 
+
+Add each record with unique UMI to a dictionary
 
 * single-end reads  
 (may work on this later)
 
-
+Check each line to see if it is in the banned dictionary. If it is, do not add to new SAM file. -+
+Write to new SAM file using the dictionary that contains the de-duplicated records. 
