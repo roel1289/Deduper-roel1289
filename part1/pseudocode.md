@@ -75,7 +75,7 @@ NS500451:154:HWKTMBGXX:1:11101:20566:1080:TATAGNGC	0	2	119767599	36	71M	*	0	0	CC
 
 
 
-## Pseudocode algorithm:
+## Pseudocode algorithm For (first draft):
 import argparse  
 import bioinfo (make sure this is on the folder of script)  
 
@@ -91,6 +91,14 @@ Go through each line one at at time (while true) and break once reaches empty li
 
 If line begins with "@" continue to next line (header)  
 
+* strand  
+use bitwise flag to determine if read is on the + or - strand  
+```
+if ((flag & 16)==16):
+   rev_comp = True
+```
+
+Add each record that is on the proper strand to a dictionary
 * account for CIGAR strings  
 Look for if there is soft clipping  
 if there is soft clipping, convert alignment start position to 5' leftmost of read  
@@ -100,14 +108,7 @@ create dictionary of start positions
 
 Add each unique start position to a dictionary
 
-* strand  
-use bitwise flag to determine if read is on the + or - strand  
-```
-if ((flag & 16)==16):
-   rev_comp = True
-```
 
-Add each record that is on the proper strand to a dictionary
 
 * known UMIs  
 Look at col 1 (QNAME) to see if it is the same as the previous line. The UMI  
@@ -120,3 +121,32 @@ Add each record with unique UMI to a dictionary
 
 Check each line to see if it is in the banned dictionary. If it is, do not add to new SAM file. -+
 Write to new SAM file using the dictionary that contains the de-duplicated records. 
+
+## Pseudocode (second draft):
+import argparse
+argparse inputs: input SAM, input UMIs, output file (kept alignments), output file (removed alignments)
+
+def bitwiseInterpreter(integer, bitwiseflag):
+   ```This function will input a bitwise integer and output True or false. Later on I will use this to determine if the read is + or - . ```
+
+
+def startpositionCigarString(CIGARstring, integer):
+   ```This function will will take a start position and CIGAR string from a sam file header. The function will use the cigar string and return an adjusted start positon if there is soft clipping. ```
+
+initialize dictionary that will keep  UMIs and counts
+initialize dictinoary for unknown UMIs
+
+Open UMI file
+   save UMIs into fule
+close UMI file
+
+open input sam ("r") and output sam files ("w"):
+   while True loop to do one line at a time
+   skip (continue) files that start with "@"
+   split line into each field (.split()) and save parts of line that will be used for qname, bp pos, biwtise flag, CIGAR string, and rname
+   Use the functions created above, each for each of the functions
+   when UMI is not recognized, add to unknown dict
+   strandedness using bitwise flag
+
+   if start pos and UMIs match, the record is put into removed output file, else it is added into kept output file (first of each record will be kept)
+   
