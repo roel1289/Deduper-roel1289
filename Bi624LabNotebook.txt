@@ -1,0 +1,10 @@
+# Labnotebook for Bi624
+
+Creating Deduper functions
+Manipulated test.sam file by copying last line and adding an S into Cigar string
+
+Had troubles with "pass", so we used continue
+While True loop didn't want to work, so we used a for loop
+
+For the cigar string, we will add the number before S (soft clipping) to the start position
+
