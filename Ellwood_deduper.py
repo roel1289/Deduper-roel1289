@@ -29,6 +29,7 @@ args = get_args()
 UMIs = []
 
 def umi_adder(umi):
+    '''This function creates a list of the UMIs based on a given file that contains all of the UMIs'''
     with open(args.umi, "r") as fh:
         while True:
             line = fh.readline().split()
@@ -45,78 +46,47 @@ umi_adder(args.umi)
 
 ###########################################
 #CIGAR string function
-# def startpositionCigarString(CIGARstring, integer):
-#    ```This function will will take a start position and CIGAR string from a sam file header. The function will use the cigar string and return an adjusted start positon if there is soft clipping. ```
 
-with open(args.file, "r") as fh:
-    CIGARstring = []
-    StartPos = []
-    #regex = re.search('(\d+)[S]')
+def startpositionCigarString(sam_file):
+    '''This function will will take a sam file and extract start position and CIGAR string from a sam file header. The function will use the cigar string and return an adjusted start positon if there is soft clipping.'''
+    with open(args.file, "r") as fh:
+        CIGARstring = []
+        StartPos = []
+        
+        #regex = re.search('(\d+)[S]')
 
-    for line in fh:
-        line = line.strip()
-        if line.startswith("@"):
-            continue
-        else:
-            CIGARstring = line.split('\t')[5]
-            StartPos = line.split('\t')[3]
-            result = re.findall(r'(\d+)[S]', CIGARstring)
-            for match in result: 
-                print(int(match))
-                
-            #result = int(result.group(1))
+        for line in fh:
+            line = line.strip()
+            if line.startswith("@"):
+                continue
+            else:
+                CIGARstring = line.split('\t')[5]
+                StartPos = line.split('\t')[3]
 
-        #print(result)
+                result = re.findall(r'(\d+)[S]', CIGARstring)
+                # determing if rev complement or not (rev comp = True)
+                bflagList = line.split('\t')[1]
+                flag = int(bflagList)
 
+                #rev complement is true
+                if((flag & 16) == 16):
+                    for match in result:
+                        StartPos = int(line.split('\t')[3]) - int(match)
+                else:
+                    for match in result:
+                        StartPos = int(line.split('\t')[3]) + int(match)
 
-            # if re.findall(('(\d+)[S]') in CIGARstring:
-            #     StartPos = re.search('(\d+)[S]') + StartPos
+                # for match in result:
+                #     StartPos = int(line.split('\t')[3]) + int(match)
+                #     #print(StartPos)
+                    
+            print(StartPos)
+    return(StartPos)
 
-        #print(line)
-        #print(CIGARstring)
-        #print(StartPos)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    # while True:
-    #     line = fh.readline()
-    #     print(line)
-    #     if line.startswith("@"):
-    #         continue 
-    #     line = fh.readline().split()
-    #     if(line == []):
-    #         break
-    #     print(line)
-
-
-#         # print(line)
-
-
-
-
-
-
+startpositionCigarString(args.file)
 
 # def bitwiseInterpreter(integer, bitwiseflag):
 #    ```This function will input a bitwise integer and output True or false. Later on I will use this to determine if the read is + or - . ```
-
-
-
-
-# def startpositionCigarString(CIGARstring, integer):
-#    ```This function will will take a start position and CIGAR string from a sam file header. The function will use the cigar string and return an adjusted start positon if there is soft clipping. ```
-
 
 
 
@@ -128,3 +98,4 @@ with open(args.file, "r") as fh:
 
 #close UMI file
 
+#./Ellwood_deduper.py -f test1.sam -u STL96.txt
