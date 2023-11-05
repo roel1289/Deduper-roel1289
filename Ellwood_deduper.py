@@ -7,7 +7,7 @@ def get_args():
     parser = argparse.ArgumentParser(description="A program to hold input + output file name")
     parser.add_argument("-f", "--file", help="designates absolute file path to sorted sam file", type = str)
     parser.add_argument("-o", "--outfile", help="designates absolute file output sam", type = str)
-    parser.add_argument("-o2", "--outDup", help="Output file of the duplicate PCR reads", type = str)
+    #parser.add_argument("-o2", "--outDup", help="Output file of the duplicate PCR reads", type = str)
     parser.add_argument("-u", "--umi", help="designates file containing the list of UMIs", type = str)
     #parser.add_argument("-h", "--help", help="prints a USEFUL help message (see argparse docs)", type = str)
     return parser.parse_args()
@@ -50,13 +50,17 @@ def startpositionCigarString(line, cigar):
 
     line = line.split()
     position = int(line[3])
+
+    #initiating variables
     num_M = 0
     num_D = 0
     num_N = 0
     softClipRight = 0
     softClipLeft = 0
+
     bit_flag = int(line[1])
     strand = is_minus_strand(bit_flag)
+
     pattern = r'(\d+)S$'
     left_pattern = r'(\d+)S(?=\d+M)'
 
@@ -79,7 +83,7 @@ def startpositionCigarString(line, cigar):
     if strand:
         adjusted_position = position + num_M + int(softClipRight) + num_D + num_N
     else:
-        adjusted_position = position + num_D + num_M + num_M - softClipLeft
+        adjusted_position = position - softClipLeft
     return adjusted_position
 
 
@@ -138,7 +142,7 @@ def main(file):
                 outSam.write(f'{line}\n')
             else:
                 parts = line.split('\t')
-                cigar = parts[4]
+                cigar = parts[5]
                 StartPos = startpositionCigarString(line, cigar) #function to adjust start position
                 chromosome = parts[2]
 
@@ -149,15 +153,16 @@ def main(file):
 
                 if (UMI, StartPos, chromosome, strand) not in membership_set:
                     membership_set.add(tuple((UMI, StartPos, chromosome, strand)))
+                    outSam.write(f'{line}\n')
                 else:
                     duplicate+=1
                     continue
 
 
 
-        for tup in membership_set:
-            #print(f'{parts[0]}\t{parts[1]}\t{parts[2]}\t{tup[1]}\t{parts[4]}\t{parts[5]}\t{parts[6]}\t{parts[7]}\t{parts[8]}\t{parts[9]}\t{parts[10]}\n')
-            outSam.write(f'{parts[0]}\t{parts[1]}\t{parts[2]}\t{tup[1]}\t{parts[4]}\t{parts[5]}\t{parts[6]}\t{parts[7]}\t{parts[8]}\t{parts[9]}\t{parts[10]}\n')
+        # for tup in membership_set:
+        #     #print(f'{parts[0]}\t{parts[1]}\t{parts[2]}\t{tup[1]}\t{parts[4]}\t{parts[5]}\t{parts[6]}\t{parts[7]}\t{parts[8]}\t{parts[9]}\t{parts[10]}\n')
+        #     outSam.write(f'{parts[0]}\t{parts[1]}\t{parts[2]}\t{tup[1]}\t{parts[4]}\t{parts[5]}\t{parts[6]}\t{parts[7]}\t{parts[8]}\t{parts[9]}\t{parts[10]}\n')
 
 
         # # if any(x not in membership_set for x):
@@ -166,7 +171,7 @@ def main(file):
         # print(filtered)
 
     #for tup in membership_set:
-        if tup[2] != prev_chrom:     
+        if parts[2] != prev_chrom:     
             membership_set.clear()
             prev_chrom = chromosome
         
@@ -199,4 +204,4 @@ main(args.file)
 
 #close UMI file
 
-#./Ellwood_deduper.py -f test1.sam -u STL96 -o out_test.sam
+#./Ellwood_deduper.py -f test1.sam -u STL96.txt -o out_test.sam
