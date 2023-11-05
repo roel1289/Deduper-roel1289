@@ -14,6 +14,7 @@ going to use a set that contains tuples. Will check to see if tuple is in the se
 
 ```cat out.sam | awk '{if ($3 == 1){print}}' | wc -l```
 
+for printing out the uniq reads per chr/scaffold:
 ```
 #!/bin/bash
 
@@ -26,3 +27,6 @@ done
 
 exit
 ```
+
+Can also just do:
+samtools idxstats out.sam
