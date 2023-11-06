@@ -9,7 +9,7 @@ def get_args():
     parser.add_argument("-o", "--outfile", help="designates absolute file output sam", type = str)
     #parser.add_argument("-o2", "--outDup", help="Output file of the duplicate PCR reads", type = str)
     parser.add_argument("-u", "--umi", help="designates file containing the list of UMIs", type = str)
-    parser.add_argument("-h", "--help", help="This programs takes a sorted sam file as input, and outputs a new sam file where all of the PCR duplicates have been removed. It also reports how many PCR duplicates were removed.", type = str)
+    #parser.add_argument("-h", "--help", help="This programs takes a sorted sam file as input, and outputs a new sam file where all of the PCR duplicates have been removed. It also reports how many PCR duplicates were removed.", type = str)
     return parser.parse_args()
     
 args = get_args()
@@ -19,7 +19,7 @@ args = get_args()
 ##########################################
 # Functions
 ##########################################
-
+# get list of the known UMIs
 UMIs = []
 
 def umi_adder(umi):
@@ -40,11 +40,12 @@ umi_adder(args.umi)
 ##########################################
 
 ############################################3
+#determine if it's on the forward or reverse strand
 def is_minus_strand(bit_flag):
-    '''This functino interprets bitwise flag. and return direction of the flag'''
+    '''This function interprets bitwise flag. and return direction of the flag'''
     return (bit_flag & 0x10) != 0
 ############################################
-
+#return new start position
 def startpositionCigarString(line, cigar):
     '''This function will will take a sam file and extract start position and CIGAR string from a sam file header. The function will use the cigar string and return an adjusted start positon if there is soft clipping.'''
     line = line.split()
@@ -59,10 +60,9 @@ def startpositionCigarString(line, cigar):
     bit_flag = int(line[1])
     strand = is_minus_strand(bit_flag)
 
-
     cigar_parts = re.findall(r'(\d+)([MIDNSHPX=])', cigar)
-    I_values = re.findall(r'(\d+)I', cigar)
-    
+        
+    #neg strand
     if strand:
         for i,tup in enumerate(cigar_parts):
             if i == 0 and 'S' in tup:
@@ -79,8 +79,7 @@ def startpositionCigarString(line, cigar):
         adjusted_position = position + num_S + num_M + num_D + num_N 
             
 
-            # if 'S' in tup:
-            #     adjusted_position = position + sum(int(tup[0]))- int(I_values[0])
+    #pos strand
     else:
         if 'S' in cigar_parts[0]:
             adjusted_position = position - int(cigar_parts[0][0])
@@ -158,22 +157,5 @@ def main(file):
 main(args.file)
 
 
-
-
-
-
-
-
-
-#wipe dictionary memory every time we get to a new chromosome
-
-
-# UMI_dict = dict()
-
-# unknownUMI_dict = dict()
-
-#read in UMI file, and then save UMIs into dictionary
-
-#close UMI file
-
+#for testing:
 #./Ellwood_deduper.py -f test1.sam -u STL96.txt -o out_test.sam
