@@ -9,7 +9,7 @@ def get_args():
     parser.add_argument("-o", "--outfile", help="designates absolute file output sam", type = str)
     #parser.add_argument("-o2", "--outDup", help="Output file of the duplicate PCR reads", type = str)
     parser.add_argument("-u", "--umi", help="designates file containing the list of UMIs", type = str)
-    #parser.add_argument("-h", "--help", help="prints a USEFUL help message (see argparse docs)", type = str)
+    parser.add_argument("-h", "--help", help="This programs takes a sorted sam file as input, and outputs a new sam file where all of the PCR duplicates have been removed. It also reports how many PCR duplicates were removed.", type = str)
     return parser.parse_args()
     
 args = get_args()
@@ -47,84 +47,56 @@ def is_minus_strand(bit_flag):
 
 def startpositionCigarString(line, cigar):
     '''This function will will take a sam file and extract start position and CIGAR string from a sam file header. The function will use the cigar string and return an adjusted start positon if there is soft clipping.'''
-
     line = line.split()
     position = int(line[3])
+    adjusted_position = 0
 
-    #initiating variables
+    num_S = 0
     num_M = 0
     num_D = 0
     num_N = 0
-    softClipRight = 0
-    softClipLeft = 0
 
     bit_flag = int(line[1])
     strand = is_minus_strand(bit_flag)
 
-    pattern = r'(\d+)S$'
-    left_pattern = r'(\d+)S(?=\d+M)'
 
-    match = re.search(pattern, cigar)
-    left_match=re.findall(left_pattern, cigar)
     cigar_parts = re.findall(r'(\d+)([MIDNSHPX=])', cigar)
-
-    for length, operation in cigar_parts:
-        length = int(length)
-        if operation == 'M':
-            num_M += length
-        elif operation =='D':
-            num_D += length
-        elif operation == 'N':
-            num_N += length
-        elif operation =='S' and strand and match:
-            softClipRight = int(match.group(1))
-        elif operation =='S' and not strand and left_match:
-            softClipLeft = int(left_match[-1])
+    I_values = re.findall(r'(\d+)I', cigar)
+    
     if strand:
-        adjusted_position = position + num_M + int(softClipRight) + num_D + num_N
+        for i,tup in enumerate(cigar_parts):
+            if i == 0 and 'S' in tup:
+                continue
+            elif 'S' in tup:
+                num_S += int(tup[0])
+            elif 'M'in tup:
+                num_M += int(tup[0])
+            elif 'D' in tup: 
+                num_D += int(tup[0])
+            elif 'N' in tup:
+                num_N += int(tup[0])
+            
+        adjusted_position = position + num_S + num_M + num_D + num_N 
+            
+
+            # if 'S' in tup:
+            #     adjusted_position = position + sum(int(tup[0]))- int(I_values[0])
     else:
-        adjusted_position = position - softClipLeft
+        if 'S' in cigar_parts[0]:
+            adjusted_position = position - int(cigar_parts[0][0])
+        else:
+            adjusted_position = position
+
+
     return adjusted_position
 
-
-#     CIGARstring = line.split('\t')[5]
-#     StartPos = line.split('\t')[3]
-
-#     #forward strand
-#     resultForward = re.findall(r'(\d+)[S]', CIGARstring)
-#     #reverse strand
-#     resultReverse = re.findall(r'(\d+)[S]', CIGARstring)
-#     #whole cigar string values:
-#     cigarSum = re.findall(r'[0-9]', CIGARstring)
-
-#     # determing if rev complement or not (rev comp = True)
-#     bflagList = line.split('\t')[1]
-#     flag = int(bflagList)
-
-#     #rev complement is true
-#     if((flag & 16) == 16):
-#         for match in resultReverse: #start position plus readlen (100)
-#             StartPos = int(line.split('\t')[3]) #plus rest of cigar string numbers
-#     else:
-#         for match in resultForward:
-#             StartPos = int(line.split('\t')[3]) - int(match)
-
-#             # for match in result:
-#             #     StartPos = int(line.split('\t')[3]) + int(match)
-#             #     #print(StartPos)
-                    
-#             #print(StartPos)
-#     return(StartPos)
-
-# #startpositionCigarString(args.file)
-
-#account for other things in cigar string (don't worry about H, = , P, or X)
 
 
 ###############################################
 def main(file):
     duplicate = 0
     prev_chrom = None
+    
 
     with open(args.file, "r") as inSam, open(args.outfile, "w") as outSam: # open(args.outDup, "w") as outDup:
         

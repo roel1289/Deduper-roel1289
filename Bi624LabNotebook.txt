@@ -30,3 +30,83 @@ exit
 
 Can also just do:
 samtools idxstats out.sam
+
+
+
+Current deduper startPosFunc:
+```
+line = line.split()
+    position = int(line[3])
+
+    #initiating variables
+    num_M = 0
+    num_D = 0
+    num_N = 0
+    softClipRight = 0
+    softClipLeft = 0
+
+    bit_flag = int(line[1])
+    strand = is_minus_strand(bit_flag)
+
+    pattern = r'(\d+)S$'
+    left_pattern = r'(\d+)S(?=\d+M)'
+
+    match = re.search(pattern, cigar)
+    left_match=re.findall(left_pattern, cigar)
+    cigar_parts = re.findall(r'(\d+)([MIDNSHPX=])', cigar)
+
+    for length, operation in cigar_parts:
+        length = int(length)
+        if operation == 'M':
+            num_M += length
+        elif operation =='D':
+            num_D += length
+        elif operation == 'N':
+            num_N += length
+        elif operation =='S' and strand and match:
+            softClipRight = int(match.group(1))
+        elif operation =='S' and not strand and left_match:
+            softClipLeft = int(left_match[-1])
+    if strand:
+        adjusted_position = position + num_M + int(softClipRight) + num_D + num_N
+    else:
+        adjusted_position = position - softClipLeft
+    return adjusted_position
+
+```
+
+First attempt at adj position function
+```
+#     CIGARstring = line.split('\t')[5]
+#     StartPos = line.split('\t')[3]
+
+#     #forward strand
+#     resultForward = re.findall(r'(\d+)[S]', CIGARstring)
+#     #reverse strand
+#     resultReverse = re.findall(r'(\d+)[S]', CIGARstring)
+#     #whole cigar string values:
+#     cigarSum = re.findall(r'[0-9]', CIGARstring)
+
+#     # determing if rev complement or not (rev comp = True)
+#     bflagList = line.split('\t')[1]
+#     flag = int(bflagList)
+
+#     #rev complement is true
+#     if((flag & 16) == 16):
+#         for match in resultReverse: #start position plus readlen (100)
+#             StartPos = int(line.split('\t')[3]) #plus rest of cigar string numbers
+#     else:
+#         for match in resultForward:
+#             StartPos = int(line.split('\t')[3]) - int(match)
+
+#             # for match in result:
+#             #     StartPos = int(line.split('\t')[3]) + int(match)
+#             #     #print(StartPos)
+                    
+#             #print(StartPos)
+#     return(StartPos)
+
+# #startpositionCigarString(args.file)
+
+#account for other things in cigar string (don't worry about H, = , P, or X)
+```
